@@ -1,16 +1,21 @@
 <div align="center">
     <h1>DIGIPIN</h1>
+    <a href="https://swift.org">
+        <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fvamsii777%2FDIGIPIN%2Fbadge%3Ftype%3Dswift-versions" alt="Swift 5.8">
+    </a>
+    <a href="https://github.com/vamsii777/DIGIPIN/actions/workflows/test.yml">
+        <img src="https://img.shields.io/endpoint?url=https%3A%2F%2Fswiftpackageindex.com%2Fapi%2Fpackages%2Fvamsii777%2FDIGIPIN%2Fbadge%3Ftype%3Dswift-versions" alt="Swift 5.8">
+    </a>
+</div>
+<div align="center" style="margin-top: 2px;">
     <a href="https://swiftpackageindex.com/vamsii777/DIGIPIN/documentation">
         <img src="https://img.shields.io/badge/read_the-docs-2ea44f?logo=readthedocs&logoColor=white" alt="Documentation">
     </a>
     <a href="LICENSE">
         <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="MIT License">
     </a>
-    <a href="https://github.com/vamsii777/DIGIPIN/actions/workflows/test.yml">
-        <img src="https://img.shields.io/github/actions/workflow/status/vamsii777/DIGIPIN/test.yml?event=push&style=flat&logo=github&label=tests" alt="Continuous Integration">
-    </a>
-    <a href="https://swift.org">
-        <img src="https://img.shields.io/badge/swift-5.8%2B-orange.svg" alt="Swift 5.8+">
+    <a href="https://github.com/vamsii777/DIGIPIN/actions/workflows/tests.yml">
+        <img src="https://img.shields.io/github/actions/workflow/status/vamsii777/DIGIPIN/tests.yml?event=push&style=flat&logo=github&label=tests" alt="Continuous Integration">
     </a>
 </div>
 <br>
