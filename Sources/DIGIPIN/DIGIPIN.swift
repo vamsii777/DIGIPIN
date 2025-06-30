@@ -1,221 +1,172 @@
 import Foundation
 
-public enum DIGIPINError: Error {
+/// Errors that can occur during DIGIPIN encoding or decoding.
+public enum DIGIPINError: Error, Equatable, CustomStringConvertible {
+    /// The provided coordinates are outside the supported bounds for India.
     case outOfBounds
+    /// The provided DIGIPIN code is invalid or malformed.
     case invalidDIGIPIN
+    /// An internal error occurred during grid calculation.
     case gridCalculationError
+
+    public var description: String {
+        switch self {
+        case .outOfBounds:
+            return "Coordinates are out of bounds for DIGIPIN."
+        case .invalidDIGIPIN:
+            return "Invalid DIGIPIN code."
+        case .gridCalculationError:
+            return "Internal grid calculation error."
+        }
+    }
 }
 
-public struct Coordinate: Equatable {
+/// Represents a geographic coordinate (latitude and longitude).
+public struct Coordinate: Equatable, CustomStringConvertible {
+    /// Latitude in decimal degrees (WGS84).
     public let latitude: Double
+    /// Longitude in decimal degrees (WGS84).
     public let longitude: Double
-    
+
+    /// Creates a new coordinate.
+    /// - Parameters:
+    ///   - latitude: Latitude in decimal degrees.
+    ///   - longitude: Longitude in decimal degrees.
     public init(latitude: Double, longitude: Double) {
         self.latitude = latitude
         self.longitude = longitude
     }
+
+    public var description: String {
+        "(lat: \(latitude), lon: \(longitude))"
+    }
 }
 
+/// DIGIPIN encoder/decoder for India Post's Digital Postal Index Number system.
 public struct DIGIPIN {
-    // MARK: - Private Constants
-    private let L1: [[String]] = [
-        ["0", "2", "0", "0"],
-        ["3", "4", "5", "6"],
-        ["G", "8", "7", "M"],
-        ["J", "9", "K", "L"]
+    // MARK: - Constants
+
+    /// The official 4x4 DIGIPIN grid used at all levels.
+    private static let grid: [[String]] = [
+        ["F", "C", "9", "8"],
+        ["J", "3", "2", "7"],
+        ["K", "4", "5", "6"],
+        ["L", "M", "P", "T"]
     ]
-    
-    private let L2: [[String]] = [
-        ["J", "G", "9", "8"],
-        ["K", "3", "2", "7"],
-        ["L", "4", "5", "6"],
-        ["M", "P", "W", "X"]
-    ]
-    
-    private let bounds = (
-        latitude: (min: 1.5, max: 39.0),
-        longitude: (min: 63.5, max: 99.0)
-    )
-    
-    private let divisions = 4
-    
-    // MARK: - Initialization
-    
+
+    /// The number of grid divisions per level.
+    private static let divisions = 4
+
+    /// The official bounding box for DIGIPIN (India coverage).
+    private struct Bounds {
+        static let minLat: Double = 2.5
+        static let maxLat: Double = 38.5
+        static let minLon: Double = 63.5
+        static let maxLon: Double = 99.5
+    }
+
+    /// The number of levels in a DIGIPIN code.
+    private static let codeLength = 10
+
+    /// Hyphen positions for formatting (after 3rd and 6th character).
+    private static let hyphenPositions: Set<Int> = [3, 6]
+
+    /// Creates a new DIGIPIN encoder/decoder.
     public init() {}
-    
-    // MARK: - Public Methods
-    
-    /// Generates a DIGIPIN code for the given coordinates
-    /// - Parameters:
-    ///   - coordinate: The coordinate for which to generate the DIGIPIN
-    /// - Returns: A DIGIPIN string
-    /// - Throws: DIGIPINError if coordinates are invalid or out of bounds
+
+    // MARK: - Public API
+
+    /// Generates a DIGIPIN code for the given coordinate.
+    /// - Parameter coordinate: The coordinate to encode.
+    /// - Returns: A 10-character DIGIPIN code (with hyphens for readability).
+    /// - Throws: `DIGIPINError.outOfBounds` if the coordinate is outside India.
     public func generateDIGIPIN(for coordinate: Coordinate) throws -> String {
         try generateDIGIPIN(latitude: coordinate.latitude, longitude: coordinate.longitude)
     }
-    
-    /// Generates a DIGIPIN code for the given latitude and longitude
+
+    /// Generates a DIGIPIN code for the given latitude and longitude.
     /// - Parameters:
-    ///   - latitude: The latitude coordinate
-    ///   - longitude: The longitude coordinate
-    /// - Returns: A DIGIPIN string
-    /// - Throws: DIGIPINError if coordinates are invalid or out of bounds
+    ///   - latitude: Latitude in decimal degrees.
+    ///   - longitude: Longitude in decimal degrees.
+    /// - Returns: A 10-character DIGIPIN code (with hyphens for readability).
+    /// - Throws: `DIGIPINError.outOfBounds` if the coordinate is outside India.
     public func generateDIGIPIN(latitude: Double, longitude: Double) throws -> String {
-        guard isValidCoordinate(latitude: latitude, longitude: longitude) else {
+        guard Self.isValidCoordinate(latitude: latitude, longitude: longitude) else {
             throw DIGIPINError.outOfBounds
         }
-        
-        var currentBounds = (
-            latitude: (min: bounds.latitude.min, max: bounds.latitude.max),
-            longitude: (min: bounds.longitude.min, max: bounds.longitude.max)
-        )
-        
-        var digiPin = ""
-        
-        for level in 1...10 {
-            let (r, c) = try findGridCell(
-                latitude: latitude,
-                longitude: longitude,
-                in: currentBounds
-            )
-            
-            if level == 1 {
-                let ch = L1[r][c]
-                digiPin.append(ch)
-            } else {
-                digiPin.append(L2[r][c])
-                if level == 3 || level == 6 { digiPin.append("-") }
+        var minLat = Bounds.minLat
+        var maxLat = Bounds.maxLat
+        var minLon = Bounds.minLon
+        var maxLon = Bounds.maxLon
+        var code = ""
+        for level in 1...Self.codeLength {
+            let latDiv = (maxLat - minLat) / Double(Self.divisions)
+            let lonDiv = (maxLon - minLon) / Double(Self.divisions)
+            let row = max(0, min(3, 3 - Int(floor((latitude - minLat) / latDiv))))
+            let col = max(0, min(3, Int(floor((longitude - minLon) / lonDiv))))
+            code += Self.grid[row][col]
+            if Self.hyphenPositions.contains(level) && level != Self.codeLength {
+                code += "-"
             }
-            
-            currentBounds = updateBounds(row: r, column: c, currentBounds: currentBounds)
+            // Update bounds for next level
+            let newMaxLat = minLat + latDiv * Double(4 - row)
+            let newMinLat = minLat + latDiv * Double(3 - row)
+            minLat = newMinLat
+            maxLat = newMaxLat
+            minLon = minLon + lonDiv * Double(col)
+            maxLon = minLon + lonDiv
         }
-        
-        return digiPin
+        return code
     }
-    
-    /// Converts a DIGIPIN code back to geographic coordinates
-    /// - Parameter digiPin: The DIGIPIN code to convert
-    /// - Returns: The corresponding geographic coordinate
-    /// - Throws: DIGIPINError if the DIGIPIN code is invalid
+
+    /// Decodes a DIGIPIN code back to its central geographic coordinate.
+    /// - Parameter digiPin: The DIGIPIN code (with or without hyphens).
+    /// - Returns: The central coordinate of the DIGIPIN cell.
+    /// - Throws: `DIGIPINError.invalidDIGIPIN` if the code is malformed or contains invalid characters.
     public func coordinate(from digiPin: String) throws -> Coordinate {
         let cleanPin = digiPin.replacingOccurrences(of: "-", with: "")
-        guard cleanPin.count == 10 else { throw DIGIPINError.invalidDIGIPIN }
-        
-        var currentBounds = (
-            latitude: (min: bounds.latitude.min, max: bounds.latitude.max),
-            longitude: (min: bounds.longitude.min, max: bounds.longitude.max)
-        )
-        
-        for level in 0..<10 {
-            let index = cleanPin.index(cleanPin.startIndex, offsetBy: level)
-            let ch = String(cleanPin[index])
-            
-            let (r, c) = try findGridCell(for: ch, level: level)
-            currentBounds = updateBounds(row: r, column: c, currentBounds: currentBounds)
-        }
-        
-        return Coordinate(
-            latitude: (currentBounds.latitude.min + currentBounds.latitude.max) / 2.0,
-            longitude: (currentBounds.longitude.min + currentBounds.longitude.max) / 2.0
-        )
-    }
-    
-    // MARK: - Private Methods
-    
-    private func isValidCoordinate(latitude: Double, longitude: Double) -> Bool {
-        latitude >= bounds.latitude.min && 
-        latitude <= bounds.latitude.max && 
-        longitude >= bounds.longitude.min && 
-        longitude <= bounds.longitude.max
-    }
-    
-    private func findGridCell(
-        latitude: Double,
-        longitude: Double,
-        in currentBounds: (latitude: (min: Double, max: Double), longitude: (min: Double, max: Double))
-    ) throws -> (row: Int, column: Int) {
-        let latDiv = (currentBounds.latitude.max - currentBounds.latitude.min) / Double(divisions)
-        let lonDiv = (currentBounds.longitude.max - currentBounds.longitude.min) / Double(divisions)
-        
-        // Handle the maximum value edge case
-        if latitude == currentBounds.latitude.max {
-            if let r = (0..<divisions).first(where: { index in
-                let upper = currentBounds.latitude.max - (Double(index) * latDiv)
-                let lower = upper - latDiv
-                return latitude >= lower
-            }) {
-                guard let c = findLongitudeCell(longitude: longitude, lonDiv: lonDiv, currentBounds: currentBounds) else {
-                    throw DIGIPINError.gridCalculationError
+        guard cleanPin.count == Self.codeLength else { throw DIGIPINError.invalidDIGIPIN }
+        var minLat = Bounds.minLat
+        var maxLat = Bounds.maxLat
+        var minLon = Bounds.minLon
+        var maxLon = Bounds.maxLon
+        for i in 0..<Self.codeLength {
+            let ch = String(cleanPin[cleanPin.index(cleanPin.startIndex, offsetBy: i)])
+            var found = false
+            var ri = -1, ci = -1
+            for r in 0..<Self.divisions {
+                for c in 0..<Self.divisions {
+                    if Self.grid[r][c] == ch {
+                        ri = r
+                        ci = c
+                        found = true
+                        break
+                    }
                 }
-                return (r, c)
+                if found { break }
             }
+            if !found { throw DIGIPINError.invalidDIGIPIN }
+            let latDiv = (maxLat - minLat) / Double(Self.divisions)
+            let lonDiv = (maxLon - minLon) / Double(Self.divisions)
+            let lat1 = maxLat - latDiv * Double(ri + 1)
+            let lat2 = maxLat - latDiv * Double(ri)
+            let lon1 = minLon + lonDiv * Double(ci)
+            let lon2 = minLon + lonDiv * Double(ci + 1)
+            minLat = lat1
+            maxLat = lat2
+            minLon = lon1
+            maxLon = lon2
         }
-        
-        if longitude == currentBounds.longitude.max {
-            if let c = (0..<divisions).last {
-                guard let r = findLatitudeCell(latitude: latitude, latDiv: latDiv, currentBounds: currentBounds) else {
-                    throw DIGIPINError.gridCalculationError
-                }
-                return (r, c)
-            }
-        }
-        
-        // Normal case
-        guard let r = findLatitudeCell(latitude: latitude, latDiv: latDiv, currentBounds: currentBounds),
-              let c = findLongitudeCell(longitude: longitude, lonDiv: lonDiv, currentBounds: currentBounds) else {
-            throw DIGIPINError.gridCalculationError
-        }
-        
-        return (r, c)
+        let centerLat = (minLat + maxLat) / 2.0
+        let centerLon = (minLon + maxLon) / 2.0
+        return Coordinate(latitude: centerLat, longitude: centerLon)
     }
-    
-    private func findLatitudeCell(latitude: Double, latDiv: Double, currentBounds: (latitude: (min: Double, max: Double), longitude: (min: Double, max: Double))) -> Int? {
-        return (0..<divisions).first(where: { index in
-            let upper = currentBounds.latitude.max - (Double(index) * latDiv)
-            let lower = upper - latDiv
-            return latitude >= lower && latitude <= upper
-        })
-    }
-    
-    private func findLongitudeCell(longitude: Double, lonDiv: Double, currentBounds: (latitude: (min: Double, max: Double), longitude: (min: Double, max: Double))) -> Int? {
-        return (0..<divisions).first(where: { index in
-            let lower = currentBounds.longitude.min + (Double(index) * lonDiv)
-            let upper = lower + lonDiv
-            return longitude >= lower && longitude <= upper
-        })
-    }
-    
-    private func findGridCell(for character: String, level: Int) throws -> (row: Int, column: Int) {
-        let grid = level == 0 ? L1 : L2
-        
-        for row in 0..<divisions {
-            for col in 0..<divisions {
-                if grid[row][col] == character {
-                    return (row, col)
-                }
-            }
-        }
-        
-        throw DIGIPINError.invalidDIGIPIN
-    }
-    
-    private func updateBounds(
-        row: Int,
-        column: Int,
-        currentBounds: (latitude: (min: Double, max: Double), longitude: (min: Double, max: Double))
-    ) -> (latitude: (min: Double, max: Double), longitude: (min: Double, max: Double)) {
-        let latDiv = (currentBounds.latitude.max - currentBounds.latitude.min) / Double(divisions)
-        let lonDiv = (currentBounds.longitude.max - currentBounds.longitude.min) / Double(divisions)
-        
-        return (
-            latitude: (
-                min: currentBounds.latitude.max - (latDiv * Double(row + 1)),
-                max: currentBounds.latitude.max - (latDiv * Double(row))
-            ),
-            longitude: (
-                min: currentBounds.longitude.min + (lonDiv * Double(column)),
-                max: currentBounds.longitude.min + (lonDiv * Double(column + 1))
-            )
-        )
+
+    // MARK: - Private Helpers
+
+    /// Checks if the coordinate is within the official DIGIPIN bounds.
+    private static func isValidCoordinate(latitude: Double, longitude: Double) -> Bool {
+        latitude >= Bounds.minLat && latitude <= Bounds.maxLat &&
+        longitude >= Bounds.minLon && longitude <= Bounds.maxLon
     }
 }

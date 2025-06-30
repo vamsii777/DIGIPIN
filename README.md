@@ -22,12 +22,6 @@
 
 🌍 📍 A Swift library for handling India Post's DIGIPIN (Digital Postal Index Number) system - encode any location in India into a simple 10-character code.
 
-Use the SPM string to easily include the dependency in your `Package.swift` file:
-
-```swift
-.package(url: "https://github.com/vamsii777/DIGIPIN.git", from: "1.0.0")
-```
-
 ## 🗺️ Geographic Encoding
 
 The `DIGIPIN` framework provides tools to generate and decode DIGIPIN codes - India Post's revolutionary geographic encoding system. It enables precise location representation through a simple 10-character alphanumeric code, covering all of India's territory with high precision.
@@ -50,22 +44,14 @@ import DIGIPIN
 
 // Generate a DIGIPIN code
 let digipin = DIGIPIN()
-let coordinate = Coordinate(latitude: 28.6139, longitude: 77.2090) // New Delhi
+let coordinate = Coordinate(latitude: 28.622788, longitude: 77.213033) // Dak Bhawan (official example)
 
-do {
-    let code = try digipin.generateDIGIPIN(for: coordinate)
-    print(code) // Outputs formatted DIGIPIN code
-} catch {
-    print("Error: \(error)")
-}
+let code = try digipin.generateDIGIPIN(for: coordinate)
+print(code) // "39J-49L-L8T4"
 
 // Convert back to coordinates
-do {
-    let location = try digipin.coordinate(from: "ABC-DEF-GHIJ")
-    print("Lat: \(location.latitude), Long: \(location.longitude)")
-} catch {
-    print("Error: \(error)")
-}
+let location = try digipin.coordinate(from: "39J-49L-L8T4")
+print("Lat: \(location.latitude), Long: \(location.longitude)")
 ```
 
 See the framework's [documentation](https://swiftpackageindex.com/vamsii777/DIGIPIN/documentation) for detailed information and guides.
@@ -73,8 +59,8 @@ See the framework's [documentation](https://swiftpackageindex.com/vamsii777/DIGI
 ## 📍 Geographic Coverage
 
 The system covers India's entire territory:
-- Latitude: 1.5°N to 39.0°N
-- Longitude: 63.5°E to 99.0°E
+- Latitude: 2.5°N to 38.5°N
+- Longitude: 63.5°E to 99.5°E
 
 Including:
 - Mainland India
@@ -83,10 +69,7 @@ Including:
 - Buffer zones
 
 For technical details about the DIGIPIN system, see:
-- [Official DIGIPIN Technical Documentation](https://www.indiapost.gov.in/Navigation_Documents/Static_Navigation/DIGIPIN%20Technical%20Document%20Final%20English.pdf)
-- [India Post DIGIPIN Portal](https://www.indiapost.gov.in)
-
-
+- [Official DIGIPIN Technical Documentation](https://www.indiapost.gov.in/VAS/DOP_PDFFiles/DIGIPIN%20Technical%20document.pdf)
 
 ## 🤝 Contributing
 
