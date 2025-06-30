@@ -1,124 +1,48 @@
-# DIGIPIN Concept Guide
+# DIGIPIN Developer Guide
 
 ## Introduction
 
-DIGIPIN (Digital Postal Index Number) is a revolutionary geographic encoding system developed by India Post to represent any location within India using a simple 10-character alphanumeric code. This guide explains the technical concepts behind DIGIPIN and how it works.
+DIGIPIN (Digital Postal Index Number) is a standardized, geo-coded addressing system for India, developed by India Post. This guide explains how to use the production-grade Swift DIGIPIN library to encode and decode locations, and how to ensure compliance with the official specification.
 
-## How DIGIPIN Works
+## Key Concepts
 
-### Grid System
+- **Grid System**: DIGIPIN divides India's territory into a hierarchical grid of 4x4 cells at each of 10 levels, using the same grid for all levels:
 
-![DIGIPIN Grid System](Resources/digipin-grid@2x.png)
-
-DIGIPIN uses a hierarchical grid system that divides India's geographic area into progressively smaller grids:
-
-1. The initial grid (Level 1) divides India into 4x4 cells
-2. Each cell is further divided into 4x4 subcells
-3. This division continues for multiple levels to achieve high precision
-
-### Code Structure
-
-A DIGIPIN code follows the format: XXX-XXX-XXXX
-
-![DIGIPIN Code Structure](digipin-structure@2x.png)
-
-- First character: Level 1 grid cell (using L1 lookup table)
-- Subsequent characters: Level 2-10 grid cells (using L2 lookup table)
-- Hyphens are added after the 3rd and 6th characters for readability
-
-### Lookup Tables
-
-#### L1 Table (First Level)
 ```
-┌───┬───┬───┬───┐
-│ 0 │ 2 │ 0 │ 0 │
-├───┼───┼───┼───┤
-│ 3 │ 4 │ 5 │ 6 │
-├───┼───┼───┼───┤
-│ G │ 8 │ 7 │ M │
-├───┼───┼───┼───┤
-│ J │ 9 │ K │ L │
-└───┴───┴───┴───┘
+[
+  ["F", "C", "9", "8"],
+  ["J", "3", "2", "7"],
+  ["K", "4", "5", "6"],
+  ["L", "M", "P", "T"]
+]
 ```
 
-#### L2 Table (Subsequent Levels)
+- **Bounds**: Only coordinates within latitude 2.5°N to 38.5°N and longitude 63.5°E to 99.5°E are valid.
+- **Reversed Row Logic**: The row index is calculated as `3 - floor((lat - minLat) / latDiv)` to match the official grid orientation.
+
+## Usage
+
+### Encoding a Coordinate
+
+```swift
+let digipin = DIGIPIN()
+let coordinate = Coordinate(latitude: 28.622788, longitude: 77.213033)
+let code = try digipin.generateDIGIPIN(for: coordinate) // "39J-49L-L8T4"
 ```
-┌───┬───┬───┬───┐
-│ J │ G │ 9 │ 8 │
-├───┼───┼───┼───┤
-│ K │ 3 │ 2 │ 7 │
-├───┼───┼───┼───┤
-│ L │ 4 │ 5 │ 6 │
-├───┼───┼───┼───┤
-│ M │ P │ W │ X │
-└───┴───┴───┴───┘
+
+### Decoding a DIGIPIN
+
+```swift
+let digipin = DIGIPIN()
+let coordinate = try digipin.coordinate(from: "39J-49L-L8T4")
 ```
 
-## Geographic Coverage
+## Best Practices
 
-![India Coverage Map](digipin-coverage@2x.png)
+- Always validate input coordinates before encoding.
+- Handle errors gracefully using `DIGIPINError`.
+- Use the provided unit tests as a reference for expected behavior.
+- Refer to the [official DIGIPIN technical document](https://www.indiapost.gov.in/VAS/DOP_PDFFiles/DIGIPIN%20Technical%20document.pdf) for algorithmic details.
 
-The system covers:
-- Latitude: 1.5°N to 39.0°N
-- Longitude: 63.5°E to 99.0°E
-
-This range includes:
-- Mainland India
-- Andaman and Nicobar Islands
-- Lakshadweep Islands
-- Buffer zones around all territories
-
-## Precision Levels
-
-Each character in the DIGIPIN code increases location precision:
-1. First character: ~400km
-2. Second character: ~100km
-3. Third character: ~25km
-4. Fourth character: ~6km
-5. Fifth character: ~1.5km
-6. Subsequent characters: Further refinement down to ~1-2 meters
-
-## Use Cases
-
-1. **Postal Services**
-   - Precise delivery locations
-   - Automated sorting
-   - Route optimization
-
-2. **Emergency Services**
-   - Quick location identification
-   - Faster response times
-   - Unambiguous location sharing
-
-3. **Business Applications**
-   - Location-based services
-   - Delivery optimization
-   - Asset tracking
-
-4. **Navigation**
-   - Precise destination input
-   - Waypoint marking
-   - Location sharing
-
-## Resources
-
-For more detailed information about DIGIPIN, refer to:
-
-1. [Official DIGIPIN Technical Documentation](https://www.indiapost.gov.in/Navigation_Documents/Static_Navigation/DIGIPIN%20Technical%20Document%20Final%20English.pdf)
-2. [India Post DIGIPIN Portal](https://www.indiapost.gov.in)
-
-## Implementation Notes
-
-### Encoding Process
-1. Input: Latitude/Longitude coordinates
-2. Check if coordinates are within bounds
-3. Apply hierarchical grid division
-4. Look up grid cell values in L1/L2 tables
-5. Format with hyphens
-
-### Decoding Process
-1. Input: DIGIPIN code
-2. Remove hyphens
-3. Process each character sequentially
-4. Use L1/L2 tables to identify grid cells
-5. Calculate final coordinates
+## References
+- [India Post DIGIPIN Technical Document](https://www.indiapost.gov.in/VAS/DOP_PDFFiles/DIGIPIN%20Technical%20document.pdf)
