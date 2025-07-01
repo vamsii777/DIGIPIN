@@ -1,5 +1,23 @@
 # Changelog
 
+## [2.1.0] - 2025-07-01
+
+### Added
+- CLI tool (`digipin`) for encoding, decoding, and distance calculation.
+- Public distance calculation API to the DIGIPIN library.
+- CLI integration tests for encode, decode, and distance commands.
+- Swift 6 concurrency compliance for CLI and library.
+
+### Changed
+- Improved documentation and usage examples for CLI and distance features.
+- Updated test targets and structure for CLI integration.
+
+### Fixed
+- Fixed SwiftPM test discovery for CLI tests.
+- Fixed concurrency warnings in CLI code for Swift 6.
+
+---
+
 ## [2.0.0] - 2025-06-30
 
 ### Breaking Change

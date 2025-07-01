@@ -27,7 +27,7 @@ public struct Coordinate: Equatable, CustomStringConvertible {
     public let latitude: Double
     /// Longitude in decimal degrees (WGS84).
     public let longitude: Double
-
+    
     /// Creates a new coordinate.
     /// - Parameters:
     ///   - latitude: Latitude in decimal degrees.
@@ -53,7 +53,7 @@ public struct DIGIPIN {
         ["K", "4", "5", "6"],
         ["L", "M", "P", "T"]
     ]
-
+    
     /// The number of grid divisions per level.
     private static let divisions = 4
 
@@ -73,9 +73,9 @@ public struct DIGIPIN {
 
     /// Creates a new DIGIPIN encoder/decoder.
     public init() {}
-
+    
     // MARK: - Public API
-
+    
     /// Generates a DIGIPIN code for the given coordinate.
     /// - Parameter coordinate: The coordinate to encode.
     /// - Returns: A 10-character DIGIPIN code (with hyphens for readability).
@@ -83,7 +83,7 @@ public struct DIGIPIN {
     public func generateDIGIPIN(for coordinate: Coordinate) throws -> String {
         try generateDIGIPIN(latitude: coordinate.latitude, longitude: coordinate.longitude)
     }
-
+    
     /// Generates a DIGIPIN code for the given latitude and longitude.
     /// - Parameters:
     ///   - latitude: Latitude in decimal degrees.
@@ -118,7 +118,7 @@ public struct DIGIPIN {
         }
         return code
     }
-
+    
     /// Decodes a DIGIPIN code back to its central geographic coordinate.
     /// - Parameter digiPin: The DIGIPIN code (with or without hyphens).
     /// - Returns: The central coordinate of the DIGIPIN cell.
@@ -160,6 +160,38 @@ public struct DIGIPIN {
         let centerLat = (minLat + maxLat) / 2.0
         let centerLon = (minLon + maxLon) / 2.0
         return Coordinate(latitude: centerLat, longitude: centerLon)
+    }
+
+    /// Calculates the great-circle distance (in kilometers) between two coordinates using the haversine formula.
+    /// - Parameters:
+    ///   - from: The starting coordinate.
+    ///   - to: The ending coordinate.
+    /// - Returns: The distance in kilometers.
+    /// - Complexity: O(1) time and space.
+    public static func distance(from: Coordinate, to: Coordinate) -> Double {
+        let earthRadiusKm = 6371.0088
+        let lat1 = from.latitude * .pi / 180
+        let lon1 = from.longitude * .pi / 180
+        let lat2 = to.latitude * .pi / 180
+        let lon2 = to.longitude * .pi / 180
+        let dLat = lat2 - lat1
+        let dLon = lon2 - lon1
+        let a = sin(dLat/2) * sin(dLat/2) + cos(lat1) * cos(lat2) * sin(dLon/2) * sin(dLon/2)
+        let c = 2 * atan2(sqrt(a), sqrt(1-a))
+        return earthRadiusKm * c
+    }
+
+    /// Calculates the great-circle distance (in kilometers) between two DIGIPIN codes.
+    /// - Parameters:
+    ///   - fromPin: The starting DIGIPIN code.
+    ///   - toPin: The ending DIGIPIN code.
+    /// - Throws: `DIGIPINError.invalidDIGIPIN` if either code is invalid.
+    /// - Returns: The distance in kilometers.
+    /// - Complexity: O(n) time, where n is the code length (default 10).
+    public func distance(from fromPin: String, to toPin: String) throws -> Double {
+        let fromCoord = try coordinate(from: fromPin)
+        let toCoord = try coordinate(from: toPin)
+        return Self.distance(from: fromCoord, to: toCoord)
     }
 
     // MARK: - Private Helpers
