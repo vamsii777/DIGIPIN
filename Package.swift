@@ -15,6 +15,12 @@ let package = Package(
         .library(
             name: "DIGIPIN",
             targets: ["DIGIPIN"]),
+        .executable(
+            name: "digipin",
+            targets: ["digipin-cli"]),
+    ],
+    dependencies: [
+        .package(url: "https://github.com/apple/swift-argument-parser.git", from: "1.6.1"),
     ],
     targets: [
         .target(
@@ -22,9 +28,23 @@ let package = Package(
             dependencies: [],
             swiftSettings: swiftSettings
         ),
+        .executableTarget(
+            name: "digipin-cli",
+            dependencies: [
+                "DIGIPIN",
+                .product(name: "ArgumentParser", package: "swift-argument-parser")
+            ],
+            swiftSettings: swiftSettings
+        ),
         .testTarget(
             name: "DIGIPINTests",
-            dependencies: ["DIGIPIN"]
+            dependencies: ["DIGIPIN"],
+            swiftSettings: swiftSettings
+        ),
+        .testTarget(
+            name: "DIGIPINCLITests",
+            dependencies: [],
+            swiftSettings: swiftSettings
         ),
     ]
 )

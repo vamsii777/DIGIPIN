@@ -113,4 +113,26 @@ final class DIGIPINTests: XCTestCase {
         XCTAssertLessThan(abs(decoded.latitude - coordinate.latitude), 0.005)
         XCTAssertLessThan(abs(decoded.longitude - coordinate.longitude), 0.005)
     }
+    
+    func testDistanceBetweenCoordinates() {
+        let coord1 = Coordinate(latitude: 12.9716, longitude: 77.5946) // Bangalore
+        let coord2 = Coordinate(latitude: 28.6139, longitude: 77.2090) // New Delhi
+        let distance = DIGIPIN.distance(from: coord1, to: coord2)
+        // Known value: ~1740 km (allowing for small floating point error)
+        XCTAssertEqual(distance, 1740, accuracy: 2.0)
+    }
+
+    func testDistanceBetweenDIGIPINs() throws {
+        let pin1 = "4P3-JK8-52C9" // Bangalore
+        let pin2 = "39J-49L-L8T4" // New Delhi (Dak Bhawan)
+        let distance = try sut.distance(from: pin1, to: pin2)
+        // Known value: ~1740 km (allowing for small floating point error)
+        XCTAssertEqual(distance, 1740, accuracy: 2.0)
+    }
+
+    func testDistanceInvalidDIGIPIN() {
+        XCTAssertThrowsError(try sut.distance(from: "INVALID", to: "39J-49L-L8T4")) { error in
+            XCTAssertTrue(error is DIGIPINError)
+        }
+    }
 }
