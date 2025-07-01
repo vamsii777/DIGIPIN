@@ -1,5 +1,16 @@
 # Changelog
 
+## [2.2.0] - 2025-07-02
+
+### Added
+- Bulk encode (`bulkEncode`) and bulk decode (`bulkDecode`) API to the DIGIPIN library for efficient batch operations.
+- Unit tests for bulk encode and decode, covering valid, invalid, and mixed input cases.
+
+### Changed
+- Improved error handling for batch operations in the DIGIPIN library.
+
+---
+
 ## [2.1.0] - 2025-07-01
 
 ### Added
