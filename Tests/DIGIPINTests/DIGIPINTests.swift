@@ -135,4 +135,54 @@ final class DIGIPINTests: XCTestCase {
             XCTAssertTrue(error is DIGIPINError)
         }
     }
+
+    func testBulkEncode() {
+        let coordinates = [
+            Coordinate(latitude: 12.9716, longitude: 77.5946), // valid
+            Coordinate(latitude: 28.6139, longitude: 77.2090), // valid
+            Coordinate(latitude: 40.0, longitude: 78.0)         // invalid (out of bounds)
+        ]
+        let results = sut.bulkEncode(coordinates)
+        XCTAssertEqual(results.count, 3)
+        if case .success(let code1) = results[0] {
+            XCTAssertEqual(code1, "4P3-JK8-52C9")
+        } else {
+            XCTFail("First coordinate should encode successfully")
+        }
+        if case .success = results[1] {
+            // Accept any valid code
+        } else {
+            XCTFail("Second coordinate should encode successfully")
+        }
+        if case .failure(let error) = results[2] {
+            XCTAssertEqual(error, .outOfBounds)
+        } else {
+            XCTFail("Third coordinate should fail with outOfBounds")
+        }
+    }
+
+    func testBulkDecode() {
+        let codes = [
+            "4P3-JK8-52C9", // valid
+            "39J-49L-L8T4", // valid
+            "XXXX-XXXX-XX"  // invalid
+        ]
+        let results = sut.bulkDecode(codes)
+        XCTAssertEqual(results.count, 3)
+        if case .success(let coord1) = results[0] {
+            XCTAssertEqual(round(coord1.latitude * 10000) / 10000, 12.9716, accuracy: 0.01)
+        } else {
+            XCTFail("First code should decode successfully")
+        }
+        if case .success(let coord2) = results[1] {
+            XCTAssertEqual(round(coord2.latitude * 10000) / 10000, 28.6228, accuracy: 0.01)
+        } else {
+            XCTFail("Second code should decode successfully")
+        }
+        if case .failure(let error) = results[2] {
+            XCTAssertEqual(error, .invalidDIGIPIN)
+        } else {
+            XCTFail("Third code should fail with invalidDIGIPIN")
+        }
+    }
 }

@@ -194,6 +194,36 @@ public struct DIGIPIN {
         return Self.distance(from: fromCoord, to: toCoord)
     }
 
+    /// Encodes an array of coordinates to DIGIPIN codes.
+    /// - Parameter coordinates: Array of coordinates to encode.
+    /// - Returns: Array of results, each containing a DIGIPIN code or an error.
+    public func bulkEncode(_ coordinates: [Coordinate]) -> [Result<String, DIGIPINError>] {
+        coordinates.map { coordinate in
+            do {
+                return .success(try generateDIGIPIN(for: coordinate))
+            } catch let error as DIGIPINError {
+                return .failure(error)
+            } catch {
+                return .failure(.gridCalculationError)
+            }
+        }
+    }
+
+    /// Decodes an array of DIGIPIN codes to coordinates.
+    /// - Parameter digiPins: Array of DIGIPIN codes to decode.
+    /// - Returns: Array of results, each containing a Coordinate or an error.
+    public func bulkDecode(_ digiPins: [String]) -> [Result<Coordinate, DIGIPINError>] {
+        digiPins.map { pin in
+            do {
+                return .success(try coordinate(from: pin))
+            } catch let error as DIGIPINError {
+                return .failure(error)
+            } catch {
+                return .failure(.gridCalculationError)
+            }
+        }
+    }
+
     // MARK: - Private Helpers
 
     /// Checks if the coordinate is within the official DIGIPIN bounds.

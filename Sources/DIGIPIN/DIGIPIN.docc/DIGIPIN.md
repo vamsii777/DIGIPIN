@@ -127,6 +127,14 @@ The CLI is built using Swift ArgumentParser and is fully Swift 6 and concurrency
 
 ## Changelog
 
+### Version 2.2.0 (2025-07-02)
+- Added
+    - Bulk encode (`bulkEncode`) and bulk decode (`bulkDecode`) API to the DIGIPIN library for efficient batch operations.
+    - Unit tests for bulk encode and decode, covering valid, invalid, and mixed input cases.
+- Changed
+    - Improved error handling for batch operations in the DIGIPIN library.
+    ---
+
 ### Version 2.1.0 (2025-07-01)
 - Added
     - CLI tool (`digipin`) for encoding, decoding, and distance calculation.
