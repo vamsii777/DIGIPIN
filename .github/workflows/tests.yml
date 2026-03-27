@@ -12,15 +12,17 @@ permissions:
 
 jobs:
   macos-tests:
-    name: macOS Tests (Swift ${{ matrix.swift }})
+    name: macOS Tests (${{ matrix.name }})
     runs-on: macos-latest
     strategy:
       fail-fast: false
       matrix:
         include:
-          - swift: "5.10"
-            xcode: "15.4"
-          - swift: "6.0"
+          - name: "Xcode 16.0"
+            swift: "6.0"
+            xcode: "16.0"
+          - name: "Xcode 16.1"
+            swift: "6.0"
             xcode: "16.1"
     
     steps:
