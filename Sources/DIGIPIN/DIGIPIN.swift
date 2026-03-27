@@ -1,7 +1,7 @@
 import Foundation
 
 /// Errors that can occur during DIGIPIN encoding or decoding.
-public enum DIGIPINError: Error, Equatable, CustomStringConvertible {
+public enum DIGIPINError: Error, Equatable, CustomStringConvertible, Sendable {
     /// The provided coordinates are outside the supported bounds for India.
     case outOfBounds
     /// The provided DIGIPIN code is invalid or malformed.
@@ -22,7 +22,7 @@ public enum DIGIPINError: Error, Equatable, CustomStringConvertible {
 }
 
 /// Represents a geographic coordinate (latitude and longitude).
-public struct Coordinate: Equatable, CustomStringConvertible {
+public struct Coordinate: Equatable, CustomStringConvertible, Sendable {
     /// Latitude in decimal degrees (WGS84).
     public let latitude: Double
     /// Longitude in decimal degrees (WGS84).
@@ -43,7 +43,7 @@ public struct Coordinate: Equatable, CustomStringConvertible {
 }
 
 /// DIGIPIN encoder/decoder for India Post's Digital Postal Index Number system.
-public struct DIGIPIN {
+public struct DIGIPIN: Sendable {
     // MARK: - Constants
 
     /// The official 4x4 DIGIPIN grid used at all levels.

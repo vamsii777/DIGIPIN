@@ -185,4 +185,21 @@ final class DIGIPINTests: XCTestCase {
             XCTFail("Third code should fail with invalidDIGIPIN")
         }
     }
+
+    func testDIGIPINCanBeStoredInSendableType() throws {
+        struct LocationService: Sendable {
+            let maxDistanceKm: Double
+            let digipin = DIGIPIN()
+
+            func code(for coordinate: Coordinate) throws -> String {
+                try digipin.generateDIGIPIN(for: coordinate)
+            }
+        }
+
+        let service = LocationService(maxDistanceKm: 5)
+        let coordinate = Coordinate(latitude: 28.622788, longitude: 77.213033)
+
+        XCTAssertEqual(service.maxDistanceKm, 5)
+        XCTAssertEqual(try service.code(for: coordinate), "39J-49L-L8T4")
+    }
 }
