@@ -2,8 +2,8 @@ name: Upstream DIGIPIN Spec Parity Check
 
 on:
   schedule:
-    # Run every Monday at 06:00 UTC to detect upstream India Post DIGIPIN standard revisions
-    - cron: '0 6 * * 1'
+    # Run once a month (1st at 06:00 UTC) to detect upstream India Post DIGIPIN standard revisions
+    - cron: '0 6 1 * *'
   workflow_dispatch:
 
 permissions:
