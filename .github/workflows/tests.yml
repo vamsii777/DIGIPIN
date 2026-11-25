@@ -18,12 +18,10 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: "Xcode 16.0"
-            swift: "6.0"
-            xcode: "16.0"
-          - name: "Xcode 16.1"
-            swift: "6.0"
-            xcode: "16.1"
+          - name: "Xcode Latest Stable"
+            xcode: "latest-stable"
+          - name: "Xcode 26.5"
+            xcode: "26.5"
     
     steps:
       - uses: actions/checkout@v4
