@@ -341,6 +341,7 @@ final class DIGIPINTests: XCTestCase {
     }
 
     func testLocalizedErrorDescriptions() {
+        XCTAssertEqual(DIGIPIN.standardVersion, "2.0.0")
         XCTAssertNotNil(DIGIPINError.outOfBounds.errorDescription)
         XCTAssertNotNil(DIGIPINError.invalidDIGIPIN.errorDescription)
         XCTAssertNotNil(DIGIPINError.gridCalculationError.errorDescription)

@@ -1,0 +1,74 @@
+name: Upstream DIGIPIN Spec Parity Check
+
+on:
+  schedule:
+    # Run every Monday at 06:00 UTC to detect upstream India Post DIGIPIN standard revisions
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  parity-check:
+    name: Verify Parity with INDIAPOST-gov/digipin
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode Latest Stable
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Build Swift DIGIPIN CLI
+        run: swift build
+
+      - name: Check Upstream Release Version & Verify 113-Vector Parity
+        run: |
+          EXPECTED_TAG="v2.0.0"
+          LATEST_TAG=$(curl -fsSL https://api.github.com/repos/INDIAPOST-gov/digipin/releases/latest | node -e "const d = JSON.parse(require('fs').readFileSync(0,'utf8')); console.log(d.tag_name || '');")
+          echo "Expected upstream DIGIPIN tag: $EXPECTED_TAG"
+          echo "Latest upstream DIGIPIN tag:   $LATEST_TAG"
+          if [ "$LATEST_TAG" != "$EXPECTED_TAG" ]; then
+            echo "::error::Upstream INDIAPOST-gov/digipin released a new standard revision ($LATEST_TAG != $EXPECTED_TAG). Review changes and update DIGIPIN compliance!"
+            exit 1
+          fi
+
+          curl -fsSL https://raw.githubusercontent.com/INDIAPOST-gov/digipin/main/src/digipin.js -o /tmp/official_digipin.js
+
+          node -e '
+          const { execFileSync } = require("child_process");
+          const { getDigiPin, getLatLngFromDigiPin } = require("/tmp/official_digipin.js");
+          const cli = ".build/debug/digipin";
+
+          const coords = [
+            [2.5, 63.5], [38.5, 63.5], [2.5, 99.5], [38.5, 99.5],
+            [20.5, 81.5], [11.5, 72.5], [29.5, 90.5],
+            [28.622788, 77.213033], [12.9716, 77.5946], [13.11179621, 80.20264269],
+            [13.067526, 80.270956], [28.6139, 77.2090], [19.0760, 72.8777],
+          ];
+          let seed = 42;
+          function rand() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; }
+          for (let i = 0; i < 100; i++) {
+            coords.push([+(2.5 + rand() * 36.0).toFixed(7), +(63.5 + rand() * 36.0).toFixed(7)]);
+          }
+
+          for (const [lat, lon] of coords) {
+            const jsPin = getDigiPin(lat, lon);
+            const swiftPin = execFileSync(cli, ["encode", String(lat), String(lon)], { encoding: "utf8" }).trim();
+            if (jsPin !== swiftPin) {
+              console.error(`ENCODE MISMATCH at (${lat}, ${lon}): JS=${jsPin} vs Swift=${swiftPin}`);
+              process.exit(1);
+            }
+            const jsDec = getLatLngFromDigiPin(jsPin);
+            const swiftDec = execFileSync(cli, ["decode", swiftPin], { encoding: "utf8" }).trim();
+            const expectedDec = `${jsDec.latitude}, ${jsDec.longitude}`;
+            if (expectedDec !== swiftDec) {
+              console.error(`DECODE MISMATCH for ${jsPin}: JS=${expectedDec} vs Swift=${swiftDec}`);
+              process.exit(1);
+            }
+          }
+          console.log(`PARITY VERIFIED: ${coords.length}/${coords.length} encode+decode vectors 100% identical to INDIAPOST-gov/digipin!`);
+          '

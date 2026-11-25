@@ -72,6 +72,10 @@ public struct Coordinate: Equatable, Hashable, Codable, CustomStringConvertible,
 public struct DIGIPIN: Sendable {
     // MARK: - Constants
 
+    /// The official India Post DIGIPIN standard version implemented by this library
+    /// (`INDIAPOST-gov/digipin` May 2026 Standards Revision).
+    public static let standardVersion = "2.0.0"
+
     /// The official 4x4 DIGIPIN grid used uniformly across all 10 levels.
     private static let grid: [[String]] = [
         ["F", "C", "9", "8"],
